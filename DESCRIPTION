@@ -1,0 +1,15 @@
+Package: QDAPCA
+Title: Dimension Reduction for Quadratic Discriminant Analysis via Supervised Principal Component Analysis
+Version: 0.0.1
+Authors@R: 
+    person(given = "Ruiyang",
+           family = "Wu",
+           role = c("aut", "cre"),
+           email = "ruiyangwu@email.arizona.edu")
+Description: What the package does (one paragraph).
+License: use_mit_license()
+Encoding: UTF-8
+LazyData: true
+Imports:
+    MASS
+RoxygenNote: 7.1.2

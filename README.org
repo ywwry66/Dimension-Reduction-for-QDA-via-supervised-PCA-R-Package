@@ -1,0 +1,3 @@
+* Dimension Reduction for QDA via Supervised PCA - R Package
+This is the R package of *Dimension Reduction for QDA via Supervised
+PCA* project.
