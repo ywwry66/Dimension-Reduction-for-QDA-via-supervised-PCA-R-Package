@@ -31,7 +31,7 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
     n <- nrow(xc_cplx)
     p <- ncol(xc_cplx)
     if (n < p) {
-        ei <- eigen(xc_cplx %*% t(xc_cplx), symmetric = TRUE)
+        ei <- eigen(xc_cplx %*% t(xc_cplx))
         f <- t(xc_cplx) %*%
             ei$vectors[, sort(abs(ei$values),
                               decreasing = TRUE, index.return = TRUE)$ix[1:rk]]
@@ -40,7 +40,7 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
     else {
         cov_diff <- t(xc_cplx) %*% xc_cplx
         mode(cov_diff) <- "double"
-        ei <- eigen(cov_diff, symmetric = TRUE)
+        ei <- eigen(cov_diff)
         f <- ei$vectors[, sort(abs(ei$values),
                                decreasing = TRUE, index.return = TRUE)$ix[1:rk]]
     }
@@ -119,11 +119,11 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
         n <- nrow(xc_cplx)
         p <- ncol(xc_cplx)
         if (n < p)
-            ei <- eigen(xc_cplx %*% t(xc_cplx), symmetric = TRUE)
+            ei <- eigen(xc_cplx %*% t(xc_cplx))
         else {
             cov_diff <- t(xc_cplx) %*% xc_cplx
             mode(cov_diff) <- "double"
-            ei <- eigen(cov_diff, symmetric = TRUE)
+            ei <- eigen(cov_diff)
         }
         m0 <- colMeans(x0_cv)
         m1 <- colMeans(x1_cv)
