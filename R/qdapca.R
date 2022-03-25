@@ -33,16 +33,18 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
     if (n < p) {
         ei <- eigen(xc_cplx %*% t(xc_cplx))
         f <- t(xc_cplx) %*%
-            ei$vectors[, sort(abs(ei$values),
-                              decreasing = TRUE, index.return = TRUE)$ix[1:rk]]
+            ei$vectors[, sort(abs(ei$values), decreasing = TRUE,
+                              index.return = TRUE)$ix[1:rk],
+                       drop = FALSE]
         f <- apply(f, MARGIN = 2, FUN = to_real)
     }
     else {
         cov_diff <- t(xc_cplx) %*% xc_cplx
         mode(cov_diff) <- "double"
         ei <- eigen(cov_diff)
-        f <- ei$vectors[, sort(abs(ei$values),
-                               decreasing = TRUE, index.return = TRUE)$ix[1:rk]]
+        f <- ei$vectors[, sort(abs(ei$values), decreasing = TRUE,
+                               index.return = TRUE)$ix[1:rk],
+                        drop = FALSE]
     }
     if (include_linear == TRUE) {
         m0 <- colMeans(x0)
@@ -137,13 +139,15 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
                 f <- t(xc_cplx) %*%
                     ei$vectors[, sort(abs(ei$values),
                                       decreasing = TRUE,
-                                      index.return = TRUE)$ix[1:j]]
+                                      index.return = TRUE)$ix[1:j],
+                               drop = FALSE]
                 f <- apply(f, MARGIN = 2, FUN = to_real)
             }
             else
                 f <- ei$vectors[, sort(abs(ei$values),
                                        decreasing = TRUE,
-                                       index.return = TRUE)$ix[1:j]]
+                                       index.return = TRUE)$ix[1:j],
+                                drop = FALSE]
             f <- cbind(f, d)
             if (class(try(ypred <-
                               predict(MASS::qda(x_cv %*% f, y_cv),
