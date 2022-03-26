@@ -74,7 +74,8 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
 ##' @author Ruiyang Wu
 ##' @export
 qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
-                      folds = 5, seed = 2020, standardize = TRUE) {
+                      folds = 5, seed = 2020, include_linear = TRUE,
+                      standardize = TRUE) {
     if (!is.null(seed)) {
         ## reinstate system seed after simulation
         sys_seed <- .GlobalEnv$.Random.seed
@@ -127,13 +128,15 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
             mode(cov_diff) <- "double"
             ei <- eigen(cov_diff)
         }
-        m0 <- colMeans(x0_cv)
-        m1 <- colMeans(x1_cv)
-        xc_svd <- svd(xc, nu = 0)
-        rank <- sum(xc_svd$d > 1e-4)
-        sigma_inv <- xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]) %*%
-            t(xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]))
-        d <- sigma_inv %*% (m0 - m1)
+        if (include_linear == TRUE) {
+            m0 <- colMeans(x0_cv)
+            m1 <- colMeans(x1_cv)
+            xc_svd <- svd(xc, nu = 0)
+            rank <- sum(xc_svd$d > 1e-4)
+            sigma_inv <- xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]) %*%
+                t(xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]))
+            d <- sigma_inv %*% (m0 - m1)
+        }
         for (j in seq_along(rk)) {
             if (n < p) {
                 f <- t(xc_cplx) %*%
@@ -148,7 +151,7 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
                                        decreasing = TRUE,
                                        index.return = TRUE)$ix[1:j],
                                 drop = FALSE]
-            f <- cbind(f, d)
+            if (include_linear == TRUE) f <- cbind(f, d)
             if (class(try(ypred <-
                               predict(MASS::qda(x_cv %*% f, y_cv),
                                       xnew_cv %*% f)$class,
@@ -163,6 +166,7 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
     }
     pred_err <- pred_err[rk]
     rk_best <- rk[which.min(pred_err)]
-    out <- qdapca(x, y, xnew, rk_best, standardize = standardize)
+    out <- qdapca(x, y, xnew, rk_best, include_linear = include_linear,
+                  standardize = standardize)
     return(c(out, list(rk = rk_best)))
 }
