@@ -74,7 +74,8 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
 ##' @author Ruiyang Wu
 ##' @export
 qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
-                      folds = 5, seed = 2020, include_linear = TRUE,
+                      folds = 5, seed = 2020,
+                      include_linear = "cv",
                       standardize = TRUE) {
     if (!is.null(seed)) {
         ## reinstate system seed after simulation
@@ -94,7 +95,7 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
     n1 <- nrow(x1)
     folds0 <- cut(seq_len(n0), breaks = folds, labels = FALSE)
     folds1 <- cut(seq_len(n1), breaks = folds, labels = FALSE)
-    pred_err <- rep(0, length(rk))
+    pred_err <- matrix(rep(0, 2 * length(rk)), ncol = 2)
     for (i in seq_len(folds)) {
         cat(i)
         test_ind0 <- which(folds0 == i)
@@ -128,15 +129,13 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
             mode(cov_diff) <- "double"
             ei <- eigen(cov_diff)
         }
-        if (include_linear == TRUE) {
-            m0 <- colMeans(x0_cv)
-            m1 <- colMeans(x1_cv)
-            xc_svd <- svd(xc, nu = 0)
-            rank <- sum(xc_svd$d > 1e-4)
-            sigma_inv <- xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]) %*%
-                t(xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]))
-            d <- sigma_inv %*% (m0 - m1)
-        }
+        m0 <- colMeans(x0_cv)
+        m1 <- colMeans(x1_cv)
+        xc_svd <- svd(xc, nu = 0)
+        rank <- sum(xc_svd$d > 1e-4)
+        sigma_inv <- xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]) %*%
+            t(xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]))
+        d <- sigma_inv %*% (m0 - m1)
         for (j in seq_along(rk)) {
             if (n < p) {
                 f <- t(xc_cplx) %*%
@@ -151,7 +150,7 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
                                        decreasing = TRUE,
                                        index.return = TRUE)$ix[1:j],
                                 drop = FALSE]
-            if (include_linear == TRUE) f <- cbind(f, d)
+            ## LDA direction not used
             if (class(try(ypred <-
                               predict(MASS::qda(x_cv %*% f, y_cv),
                                       xnew_cv %*% f)$class,
@@ -160,13 +159,29 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
                 rk <- 1:(j - 1)
                 break
             }
-            pred_err[j] <- pred_err[j] +
+            pred_err[j, 1] <- pred_err[j, 1] +
+                sum(ypred != c(rep(0, test_n0), rep(1, test_n1)))
+            ## LDA direction used
+            f <- cbind(f, d)
+            if (class(try(ypred <-
+                              predict(MASS::qda(x_cv %*% f, y_cv),
+                                      xnew_cv %*% f)$class,
+                          silent = TRUE))
+                != "factor") {
+                rk <- 1:(j - 1)
+                break
+            }
+            pred_err[j, 2] <- pred_err[j, 2] +
                 sum(ypred != c(rep(0, test_n0), rep(1, test_n1)))
         }
     }
-    pred_err <- pred_err[rk]
-    rk_best <- rk[which.min(pred_err)]
+    pred_err <- pred_err[rk, ]
+    pred_err_min <- min(pred_err)
+    parameter_best <- which(pred_err == pred_err_min, arr.ind = TRUE)
+    rk_best <- rk[parameter_best[1, 1]]
+    if (include_linear == "cv")
+        include_linear <- as.logical(parameter_best[1, 2] - 1)
     out <- qdapca(x, y, xnew, rk_best, include_linear = include_linear,
                   standardize = standardize)
-    return(c(out, list(rk = rk_best)))
+    return(c(out, list(rk = rk_best, include_linear = include_linear)))
 }
