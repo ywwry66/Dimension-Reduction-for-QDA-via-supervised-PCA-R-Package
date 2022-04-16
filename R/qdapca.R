@@ -73,7 +73,7 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
 ##' @return 
 ##' @author Ruiyang Wu
 ##' @export
-qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), 10, sqrt(nrow(x)))),
+qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), nrow(x), 50)),
                       folds = 5, seed = 2020,
                       include_linear = "cv",
                       standardize = TRUE) {
