@@ -49,11 +49,7 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
     if (include_linear == TRUE) {
         m0 <- colMeans(x0)
         m1 <- colMeans(x1)
-        xc_svd <- svd(xc, nu = 0)
-        rank <- sum(xc_svd$d > 1e-4)
-        sigma_inv <- xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]) %*%
-            t(xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]))
-        d <- sigma_inv %*% (m0 - m1)
+        d <- m0 - m1
         f <- cbind(f, d)
     }
     return(list(class = predict(MASS::qda(x %*% f, y), xnew %*% f)$class))
@@ -131,11 +127,7 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), nrow(x), 50)),
         }
         m0 <- colMeans(x0_cv)
         m1 <- colMeans(x1_cv)
-        xc_svd <- svd(xc, nu = 0)
-        rank <- sum(xc_svd$d > 1e-4)
-        sigma_inv <- xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]) %*%
-            t(xc_svd$v[, 1:rank] %*% diag(1 / xc_svd$d[1:rank]))
-        d <- sigma_inv %*% (m0 - m1)
+        d <- m0 - m1
         for (j in seq_along(rk)) {
             if (n < p) {
                 f <- t(xc_cplx) %*%
