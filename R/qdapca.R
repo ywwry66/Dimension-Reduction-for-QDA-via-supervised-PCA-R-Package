@@ -13,12 +13,17 @@
 ##' @export
 qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
                    standardize = TRUE) {
+    n <- nrow(x)
+    p <- ncol(x)
     x0 <- x[which(y == 0), ]
     x1 <- x[which(y == 1), ]
+    n0 <- nrow(x0)
+    n1 <- nrow(x1)
     x0c <- scale(x0, scale = FALSE)
     x1c <- scale(x1, scale = FALSE)
     xc <- rbind(x0c, x1c)
-    xc_cplx <- rbind(x0c, 1i * x1c)
+    xc_cplx <- rbind(sqrt((n - 1) / (n0 - 1)) * x0c,
+                     1i * sqrt((n - 1) / (n1 - 1)) * x1c)
     if (standardize == TRUE) {
         scaling <- diag(1 / sqrt(diag(cov(xc))))
         x <- x %*% scaling
@@ -28,8 +33,6 @@ qdapca <- function(x, y, xnew, rk = 1, include_linear = TRUE,
         xc <- xc %*% scaling
         xc_cplx <- xc_cplx %*% scaling
     }
-    n <- nrow(xc_cplx)
-    p <- ncol(xc_cplx)
     if (n < p) {
         ei <- eigen(xc_cplx %*% t(xc_cplx))
         f <- t(xc_cplx) %*%
@@ -98,15 +101,20 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), nrow(x), 50)),
         test_ind1 <- which(folds1 == i)
         test_n0 <- length(test_ind0)
         test_n1 <- length(test_ind1)
+        train_n0 <- n0 - test_n0
+        train_n1 <- n1 - test_n1
         x0_cv <- x0[-test_ind0, ]
         x1_cv <- x1[-test_ind1, ]
         x_cv <- rbind(x0_cv, x1_cv)
         xnew_cv <- rbind(x0[test_ind0, ], x1[test_ind1, ])
-        y_cv <- c(rep(0, n0 - test_n0), rep(1, n1 - test_n1))
+        y_cv <- c(rep(0, train_n0), rep(1, train_n1))
+        n <- nrow(x_cv)
+        p <- ncol(x_cv)
         x0c <- scale(x0_cv, scale = FALSE)
         x1c <- scale(x1_cv, scale = FALSE)
         xc <- rbind(x0c, x1c)
-        xc_cplx <- rbind(x0c, 1i * x1c)
+        xc_cplx <- rbind(sqrt((n - 1) / (train_n0 - 1)) * x0c,
+                         1i * sqrt((n - 1) / (train_n1 - 1)) * x1c)
         if (standardize == TRUE) {
             scaling <- diag(1 / sqrt(diag(cov(xc))))
             x_cv <- x_cv %*% scaling
@@ -116,8 +124,6 @@ qdapca_cv <- function(x, y, xnew, rk = 1:(min(ncol(x), nrow(x), 50)),
             xc <- xc %*% scaling
             xc_cplx <- xc_cplx %*% scaling
         }
-        n <- nrow(xc_cplx)
-        p <- ncol(xc_cplx)
         if (n < p)
             ei <- eigen(xc_cplx %*% t(xc_cplx))
         else {
