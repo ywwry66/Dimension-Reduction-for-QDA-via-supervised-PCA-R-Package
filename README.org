@@ -1,3 +1,23 @@
 * Dimension Reduction for QDA via Supervised PCA - R Package
 This is the R package of *Dimension Reduction for QDA via Supervised
 PCA* project.
+** Installation
+If you have =devtools= package installed, you can use a single command
+in R:
+#+begin_src R
+  devtools::install_github(“ywwry66/Dimension-Reduction-
+                            for-QDA-via-supervised-PCA-R-Package”)
+#+end_src
+
+Otherwise, you should download the versioned tarball under Releases -
+Assets, and install it with
+#+begin_src R
+  install.packages()
+#+end_src
+** Documentation
+The main function for the package is =SPCAQDA::spcaqda=. For
+documentation, in an R session, enter
+#+begin_src R
+  library(SPCAQDA)
+  ?spcaqda
+#+end_src
